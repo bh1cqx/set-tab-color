@@ -94,6 +94,68 @@ bg = "default"
 
 Any combination of these properties can be specified in a profile. Unspecified colors will remain unchanged.
 
+### Sub-Profiles
+
+Sub-profiles allow you to override base profile settings based on your current shell and terminal environment. The tool automatically detects your shell (zsh, bash, fish, etc.) and terminal (iTerm2, SSH, VS Code, tmux, etc.) and applies appropriate overrides.
+
+#### Sub-Profile Priority
+
+When loading a profile, the tool applies settings in this order:
+1. **Base profile**: `[profiles.myprofile]`
+2. **Shell-specific override**: `[profiles.myprofile.zsh]` (if running in zsh)
+3. **Terminal-specific override**: `[profiles.myprofile.iterm2]` (if running in iTerm2)
+
+Terminal overrides take priority over shell overrides, which take priority over the base profile.
+
+#### Sub-Profile Examples
+
+```toml
+# Base development profile
+[profiles.dev]
+tab = "blue"
+fg = "white"
+bg = "black"
+
+# Shell-specific overrides
+[profiles.dev.zsh]
+tab = "cyan"     # Different tab color for zsh users
+fg = "yellow"    # Different text color for zsh
+
+[profiles.dev.bash]
+tab = "lightblue"
+bg = "darkblue"  # Different background for bash
+
+# Terminal-specific overrides (highest priority)
+[profiles.dev.iterm2]
+tab = "purple"   # iTerm2 gets purple tabs (overrides shell setting)
+bg = "black"
+
+[profiles.dev.vscode]
+tab = "green"    # VS Code terminal gets green tabs
+fg = "lightgreen"
+
+[profiles.dev.ssh]
+tab = "brightblue"  # SSH sessions get bright blue
+fg = "white"
+bg = "black"
+```
+
+#### Supported Shell Types
+- `zsh`, `bash`, `fish`, `tcsh`, `csh`, `ksh`, `sh`
+
+#### Supported Terminal Types
+- `iterm2`, `vscode`, `ssh`, `tmux`, `etterminal`
+
+#### Example Sub-Profile Behavior
+
+With the configuration above, running `./set-tab-color -profile dev` will result in:
+
+- **zsh in iTerm2**: tab=purple (terminal override), fg=yellow (shell override), bg=black (terminal override)
+- **bash in iTerm2**: tab=purple (terminal override), fg=white (base), bg=black (terminal override)
+- **zsh in VS Code**: tab=green (terminal override), fg=lightgreen (terminal override), bg=black (base)
+- **bash in SSH**: tab=brightblue (terminal override), fg=white (terminal override), bg=black (terminal override)
+- **zsh in regular terminal**: tab=cyan (shell override), fg=yellow (shell override), bg=black (base)
+
 ### Supported Color Formats
 
 1. **Hex Colors**

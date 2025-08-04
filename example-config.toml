@@ -1,6 +1,7 @@
 # Example configuration file for set-tab-color
 # Copy this to ~/.config/set-tab-color.toml or set SET_TAB_COLOR_CONFIG environment variable
 
+# Basic profiles
 [profiles.development]
 tab = "blue"
 fg = "white"
@@ -44,3 +45,51 @@ fg = "white"
 [profiles.warning]
 tab = "orange"
 fg = "black"
+
+# Sub-profiles with shell-specific overrides
+# These override the base profile settings when running in specific shells
+
+[profiles.development.zsh]
+tab = "cyan"  # Different tab color for zsh
+fg = "yellow" # Different foreground for zsh
+
+[profiles.development.bash]
+tab = "lightblue"
+bg = "darkblue"
+
+[profiles.production.fish]
+tab = "magenta"
+fg = "white"
+
+# Sub-profiles with terminal-specific overrides
+# These override shell overrides and base settings when running in specific terminals
+
+[profiles.development.iterm2]
+tab = "purple"    # iTerm2 gets purple tabs in dev
+bg = "black"
+
+[profiles.development.vscode]
+tab = "green"     # VS Code gets green tabs in dev
+fg = "lightgreen"
+
+[profiles.production.ssh]
+tab = "brightred" # SSH sessions get bright red for production
+fg = "white"
+bg = "black"
+
+[profiles.staging.tmux]
+tab = "yellow"    # tmux sessions get yellow for staging
+fg = "black"
+
+# Example of a profile with multiple overrides
+[profiles.debug]
+tab = "white"
+fg = "black"
+bg = "yellow"
+
+[profiles.debug.zsh]
+tab = "lightgray" # zsh override
+
+[profiles.debug.iterm2]
+tab = "gray"      # iTerm2 override (takes priority over zsh)
+bg = "orange"
