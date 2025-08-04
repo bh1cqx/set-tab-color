@@ -13,6 +13,8 @@ func main() {
 		foregroundColor = flag.String("fg", "", "Set foreground color")
 		backgroundColor = flag.String("bg", "", "Set background color")
 		profileName     = flag.String("profile", "", "Use predefined profile from config file")
+		listProfiles    = flag.Bool("list-profiles", false, "List all available profiles")
+		listColors      = flag.Bool("list-colors", false, "List all available CSS color names")
 	)
 
 	flag.Usage = func() {
@@ -33,6 +35,39 @@ func main() {
 	}
 
 	flag.Parse()
+
+	// Handle listing operations
+	if *listProfiles {
+		profiles, err := listProfileNames()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error loading profiles: %v\n", err)
+			os.Exit(1)
+		}
+
+		if len(profiles) == 0 {
+			fmt.Println("No profiles found.")
+		} else {
+			fmt.Println("Available profiles:")
+			for _, name := range profiles {
+				fmt.Printf("  %s\n", name)
+			}
+		}
+		return
+	}
+
+	if *listColors {
+		colors, err := listCSSColorNames()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error loading CSS colors: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Println("Available CSS color names:")
+		for _, name := range colors {
+			fmt.Printf("  %s\n", name)
+		}
+		return
+	}
 
 	// Handle profile-based configuration
 	if *profileName != "" {

@@ -56,3 +56,18 @@ func normalizeColor(input string) string {
 	}
 	return ""
 }
+
+// listCSSColorNames returns a list of all available CSS color names
+func listCSSColorNames() ([]string, error) {
+	// Initialize CSS colors if not already done
+	if err := initColors(); err != nil {
+		return nil, err
+	}
+
+	names := make([]string, 0, len(cssColors))
+	for name := range cssColors {
+		names = append(names, name)
+	}
+
+	return names, nil
+}

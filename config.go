@@ -101,3 +101,18 @@ func applyProfile(profile *Profile) error {
 
 	return nil
 }
+
+// listProfileNames returns a list of all available profile names
+func listProfileNames() ([]string, error) {
+	config, err := loadConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	names := make([]string, 0, len(config.Profiles))
+	for name := range config.Profiles {
+		names = append(names, name)
+	}
+
+	return names, nil
+}
