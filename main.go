@@ -12,6 +12,7 @@ func main() {
 		tabColor        = flag.String("tab", "", "Set tab color")
 		foregroundColor = flag.String("fg", "", "Set foreground color")
 		backgroundColor = flag.String("bg", "", "Set background color")
+		profileName     = flag.String("profile", "", "Use predefined profile from config file")
 	)
 
 	flag.Usage = func() {
@@ -22,17 +23,42 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  - Hex colors: #f80, #ff8800\n")
 		fmt.Fprintf(os.Stderr, "  - CSS color names: red, blue, lightblue, etc.\n")
 		fmt.Fprintf(os.Stderr, "  - default: restore default color\n")
+		fmt.Fprintf(os.Stderr, "\nConfiguration:\n")
+		fmt.Fprintf(os.Stderr, "  Config file: ~/.config/set-tab-color.toml (or $SET_TAB_COLOR_CONFIG)\n")
 		fmt.Fprintf(os.Stderr, "\nExamples:\n")
 		fmt.Fprintf(os.Stderr, "  %s -tab red\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s -fg white -bg black\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s -tab #ff8800 -fg lightblue\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "  %s -profile myprofile\n", os.Args[0])
 	}
 
 	flag.Parse()
 
+	// Handle profile-based configuration
+	if *profileName != "" {
+		// Cannot mix profile with individual colors
+		if *tabColor != "" || *foregroundColor != "" || *backgroundColor != "" {
+			fmt.Fprintf(os.Stderr, "Error: Cannot use -profile with individual color options\n\n")
+			flag.Usage()
+			os.Exit(1)
+		}
+
+		profile, err := getProfile(*profileName)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error loading profile: %v\n", err)
+			os.Exit(1)
+		}
+
+		if err := applyProfile(profile); err != nil {
+			fmt.Fprintf(os.Stderr, "Error applying profile: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+
 	// Check if at least one color option was provided
 	if *tabColor == "" && *foregroundColor == "" && *backgroundColor == "" {
-		fmt.Fprintf(os.Stderr, "Error: At least one color option must be specified\n\n")
+		fmt.Fprintf(os.Stderr, "Error: At least one color option or profile must be specified\n\n")
 		flag.Usage()
 		os.Exit(1)
 	}

@@ -1,0 +1,46 @@
+# Example configuration file for set-tab-color
+# Copy this to ~/.config/set-tab-color.toml or set SET_TAB_COLOR_CONFIG environment variable
+
+[profiles.development]
+tab = "blue"
+fg = "white"
+bg = "black"
+
+[profiles.production]
+tab = "red"
+fg = "yellow"
+
+[profiles.staging]
+tab = "#ff8800"
+fg = "lightblue"
+bg = "darkgray"
+
+[profiles.minimal]
+tab = "green"
+
+[profiles.reset]
+tab = "default"
+fg = "default"
+bg = "default"
+
+[profiles.dark-theme]
+tab = "purple"
+fg = "lightgray"
+bg = "black"
+
+[profiles.light-theme]
+tab = "blue"
+fg = "black"
+bg = "white"
+
+[profiles.error]
+tab = "red"
+fg = "white"
+
+[profiles.success]
+tab = "green"
+fg = "white"
+
+[profiles.warning]
+tab = "orange"
+fg = "black"
