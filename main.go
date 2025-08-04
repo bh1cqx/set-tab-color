@@ -15,6 +15,7 @@ func main() {
 		profileName     = flag.String("profile", "", "Use predefined profile from config file")
 		listProfiles    = flag.Bool("list-profiles", false, "List all available profiles")
 		listColors      = flag.Bool("list-colors", false, "List all available CSS color names")
+		verbose         = flag.Bool("verbose", false, "Enable verbose output for debugging")
 	)
 
 	flag.Usage = func() {
@@ -35,6 +36,20 @@ func main() {
 	}
 
 	flag.Parse()
+
+	// Show terminal detection information if verbose flag is enabled
+	if *verbose {
+		terminalType := detectTerminalType()
+		fmt.Fprintf(os.Stderr, "Terminal detection: %s\n", terminalType)
+
+		if chain, err := getProcessAncestorChain(); err == nil {
+			fmt.Fprintf(os.Stderr, "Process ancestor chain:\n")
+			for i, processName := range chain {
+				fmt.Fprintf(os.Stderr, "  %d: %s\n", i, processName)
+			}
+		}
+		fmt.Fprintf(os.Stderr, "\n")
+	}
 
 	// Handle listing operations
 	if *listProfiles {
