@@ -71,3 +71,22 @@ func listCSSColorNames() ([]string, error) {
 
 	return names, nil
 }
+
+// listCSSColorNamesFormatted returns a comma-separated string of all available CSS color names
+// with each name colored according to its actual color value
+func listCSSColorNamesFormatted() (string, error) {
+	// Initialize CSS colors if not already done
+	if err := initColors(); err != nil {
+		return "", err
+	}
+
+	coloredNames := make([]string, 0, len(cssColors))
+	for name, hexValue := range cssColors {
+		// Remove the # prefix from hex value for our colorText function
+		hex := strings.TrimPrefix(hexValue, "#")
+		coloredName := colorText(name, hex)
+		coloredNames = append(coloredNames, coloredName)
+	}
+
+	return strings.Join(coloredNames, ", "), nil
+}

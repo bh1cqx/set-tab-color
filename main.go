@@ -77,16 +77,14 @@ func main() {
 	}
 
 	if *listColors {
-		colors, err := listCSSColorNames()
+		coloredOutput, err := listCSSColorNamesFormatted()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error loading CSS colors: %v\n", err)
 			os.Exit(1)
 		}
 
 		fmt.Println("Available CSS color names:")
-		for _, name := range colors {
-			fmt.Printf("  %s\n", name)
-		}
+		fmt.Println(coloredOutput)
 		return
 	}
 
