@@ -19,17 +19,46 @@ const (
 	TerminalTypeVSCode     TerminalType = "vscode"
 )
 
-// detectTerminalType detects the current terminal type by walking up the process ancestry
-// and returning the first terminal type encountered
-func detectTerminalType() TerminalType {
+// ShellType represents different shell types
+type ShellType string
+
+const (
+	ShellTypeUnknown ShellType = "unknown"
+	ShellTypeBash    ShellType = "bash"
+	ShellTypeZsh     ShellType = "zsh"
+	ShellTypeFish    ShellType = "fish"
+	ShellTypeTcsh    ShellType = "tcsh"
+	ShellTypeCsh     ShellType = "csh"
+	ShellTypeKsh     ShellType = "ksh"
+	ShellTypeSh      ShellType = "sh"
+)
+
+// TerminalShellInfo contains both terminal and shell detection results
+type TerminalShellInfo struct {
+	Terminal TerminalType
+	Shell    ShellType
+	Valid    bool // true if shell comes before terminal in the process chain
+}
+
+// detectTerminalAndShell detects both terminal and shell types with validation
+// that shell should come before terminal in the process ancestry
+func detectTerminalAndShell() TerminalShellInfo {
 	// Get current process
 	currentPid := int32(os.Getpid())
 	proc, err := process.NewProcess(currentPid)
 	if err != nil {
-		return TerminalTypeUnknown
+		return TerminalShellInfo{
+			Terminal: TerminalTypeUnknown,
+			Shell:    ShellTypeUnknown,
+			Valid:    false,
+		}
 	}
 
-	// Walk up the process tree looking for terminal types
+	var foundShell ShellType = ShellTypeUnknown
+	var foundTerminal TerminalType = TerminalTypeUnknown
+	var shellFoundFirst bool
+
+	// Walk up the process tree looking for both shell and terminal types
 	for {
 		// Get parent process first (skip current process)
 		parentPid, err := proc.Ppid()
@@ -49,36 +78,70 @@ func detectTerminalType() TerminalType {
 			continue
 		}
 
-		// Check for terminal types in priority order
-		// Case-sensitive for all except iTerm
-
-		// Check for SSH first (highest priority)
-		if matchesTerminalName(name, "sshd", true) {
-			return TerminalTypeSSH
+		// Check for shell types first (if we haven't found one yet)
+		if foundShell == ShellTypeUnknown {
+			if matchesTerminalName(name, "zsh", true) {
+				foundShell = ShellTypeZsh
+				shellFoundFirst = (foundTerminal == TerminalTypeUnknown)
+			} else if matchesTerminalName(name, "bash", true) {
+				foundShell = ShellTypeBash
+				shellFoundFirst = (foundTerminal == TerminalTypeUnknown)
+			} else if matchesTerminalName(name, "fish", true) {
+				foundShell = ShellTypeFish
+				shellFoundFirst = (foundTerminal == TerminalTypeUnknown)
+			} else if matchesTerminalName(name, "tcsh", true) {
+				foundShell = ShellTypeTcsh
+				shellFoundFirst = (foundTerminal == TerminalTypeUnknown)
+			} else if matchesTerminalName(name, "csh", true) {
+				foundShell = ShellTypeCsh
+				shellFoundFirst = (foundTerminal == TerminalTypeUnknown)
+			} else if matchesTerminalName(name, "ksh", true) {
+				foundShell = ShellTypeKsh
+				shellFoundFirst = (foundTerminal == TerminalTypeUnknown)
+			} else if matchesTerminalName(name, "sh", true) {
+				foundShell = ShellTypeSh
+				shellFoundFirst = (foundTerminal == TerminalTypeUnknown)
+			}
 		}
 
-		// Check for tmux
-		if matchesTerminalName(name, "tmux", true) {
-			return TerminalTypeTmux
+		// Check for terminal types (if we haven't found one yet)
+		if foundTerminal == TerminalTypeUnknown {
+			if matchesTerminalName(name, "sshd", true) {
+				foundTerminal = TerminalTypeSSH
+			} else if matchesTerminalName(name, "tmux", true) {
+				foundTerminal = TerminalTypeTmux
+			} else if matchesTerminalName(name, "etterminal", true) {
+				foundTerminal = TerminalTypeETTerminal
+			} else if matchesTerminalName(name, "iterm2", false) {
+				foundTerminal = TerminalTypeITerm2
+			} else if matchesTerminalName(name, "Code Helper", false) {
+				foundTerminal = TerminalTypeVSCode
+			}
 		}
 
-		// Check for ETTerminal
-		if matchesTerminalName(name, "etterminal", true) {
-			return TerminalTypeETTerminal
-		}
-
-		// Check for iTerm2 (case-insensitive)
-		if matchesTerminalName(name, "iterm2", false) {
-			return TerminalTypeITerm2
-		}
-
-		// Check for VSCode (case-insensitive for "Code Helper")
-		if matchesTerminalName(name, "Code Helper", false) {
-			return TerminalTypeVSCode
+		// If we've found both, we can stop
+		if foundShell != ShellTypeUnknown && foundTerminal != TerminalTypeUnknown {
+			break
 		}
 	}
 
-	return TerminalTypeUnknown
+	return TerminalShellInfo{
+		Terminal: foundTerminal,
+		Shell:    foundShell,
+		Valid:    shellFoundFirst || (foundShell != ShellTypeUnknown && foundTerminal == TerminalTypeUnknown),
+	}
+}
+
+// detectTerminalType detects terminal type for backwards compatibility
+func detectTerminalType() TerminalType {
+	info := detectTerminalAndShell()
+	return info.Terminal
+}
+
+// detectShellType detects shell type for backwards compatibility
+func detectShellType() ShellType {
+	info := detectTerminalAndShell()
+	return info.Shell
 }
 
 // matchesTerminalName checks if a process name matches a terminal name

@@ -34,17 +34,60 @@ func TestDetectTerminalType(t *testing.T) {
 	t.Logf("Detected terminal type: %s", terminalType)
 }
 
-func TestTerminalTypeDetection(t *testing.T) {
-	// Test the terminal type detection and log results for debugging
-	terminalType := detectTerminalType()
+func TestTerminalAndShellDetection(t *testing.T) {
+	// Test the combined terminal and shell detection
+	info := detectTerminalAndShell()
 
-	t.Logf("Terminal type detection results:")
+	t.Logf("Combined detection results:")
+	t.Logf("  Terminal: %v", info.Terminal)
+	t.Logf("  Shell: %v", info.Shell)
+	t.Logf("  Valid: %v", info.Valid)
+
+	// Test individual detection functions for backwards compatibility
+	terminalType := detectTerminalType()
+	shellType := detectShellType()
+
+	t.Logf("Individual detection results:")
 	t.Logf("  detectTerminalType() returned: %v", terminalType)
-	t.Logf("  Is ETTerminal: %v", terminalType == TerminalTypeETTerminal)
-	t.Logf("  Is iTerm2: %v", terminalType == TerminalTypeITerm2)
-	t.Logf("  Is SSH: %v", terminalType == TerminalTypeSSH)
-	t.Logf("  Is Tmux: %v", terminalType == TerminalTypeTmux)
-	t.Logf("  Is VSCode: %v", terminalType == TerminalTypeVSCode)
+	t.Logf("  detectShellType() returned: %v", shellType)
+
+	// Verify consistency
+	if terminalType != info.Terminal {
+		t.Errorf("detectTerminalType() = %v, but detectTerminalAndShell().Terminal = %v", terminalType, info.Terminal)
+	}
+	if shellType != info.Shell {
+		t.Errorf("detectShellType() = %v, but detectTerminalAndShell().Shell = %v", shellType, info.Shell)
+	}
+}
+
+func TestShellTypeValidation(t *testing.T) {
+	// Test that shell types are valid
+	validShellTypes := []ShellType{
+		ShellTypeUnknown,
+		ShellTypeBash,
+		ShellTypeZsh,
+		ShellTypeFish,
+		ShellTypeTcsh,
+		ShellTypeCsh,
+		ShellTypeKsh,
+		ShellTypeSh,
+	}
+
+	shellType := detectShellType()
+
+	found := false
+	for _, validType := range validShellTypes {
+		if shellType == validType {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Errorf("detectShellType() returned invalid type: %s", shellType)
+	}
+
+	t.Logf("Detected shell type: %s", shellType)
 }
 
 func TestGetProcessAncestorChain(t *testing.T) {
