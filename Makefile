@@ -1,4 +1,4 @@
-.PHONY: build release clean
+.PHONY: build release clean test
 
 # Default target - build for current platform
 build:
@@ -12,6 +12,10 @@ release:
 	GOOS=linux GOARCH=arm64 go build -o build/set-tab-color-linux-arm64 .
 	GOOS=darwin GOARCH=amd64 go build -o build/set-tab-color-macos-amd64 .
 	GOOS=darwin GOARCH=arm64 go build -o build/set-tab-color-macos-arm64 .
+
+# Run tests
+test:
+	go test -v ./...
 
 # Clean build artifacts
 clean:

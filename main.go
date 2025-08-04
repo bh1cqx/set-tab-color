@@ -50,39 +50,47 @@ func normalizeColor(input string) string {
 	return ""
 }
 
+// runSetTabColor executes it2setcolor with the given color
+func runSetTabColor(color string) error {
+	// Parse embedded CSS color map
+	if cssColors == nil {
+		if err := json.Unmarshal(cssColorsJSON, &cssColors); err != nil {
+			return fmt.Errorf("error parsing embedded css-colors.json: %v", err)
+		}
+	}
+
+	// Normalize user input
+	normalizedColor := normalizeColor(color)
+	if normalizedColor == "" {
+		return fmt.Errorf("unknown color: %s", color)
+	}
+
+	// Locate and check existence of custom it2setcolor in ~/.iterm2/
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("could not get home dir: %v", err)
+	}
+	it2bin := filepath.Join(home, ".iterm2", "it2setcolor")
+
+	if _, err := os.Stat(it2bin); os.IsNotExist(err) {
+		return fmt.Errorf("it2setcolor not found at %s", it2bin)
+	}
+
+	// Execute it2setcolor with the normalized hex
+	cmd := exec.Command(it2bin, "tab", normalizedColor)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Fprintf(os.Stderr, "Usage: %s COLOR\n", os.Args[0])
 		os.Exit(1)
 	}
 
-	// Parse embedded CSS color map
-	if err := json.Unmarshal(cssColorsJSON, &cssColors); err != nil {
-		fmt.Fprintf(os.Stderr, "Error parsing embedded css-colors.json: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Normalize user input
-	color := normalizeColor(os.Args[1])
-	if color == "" {
-		fmt.Fprintf(os.Stderr, "Unknown color: %s\n", os.Args[1])
-		os.Exit(1)
-	}
-
-	// Locate custom it2setcolor in ~/.iterm2/
-	home, err := os.UserHomeDir()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not get home dir: %v\n", err)
-		os.Exit(1)
-	}
-	it2bin := filepath.Join(home, ".iterm2", "it2setcolor")
-
-	// Execute it2setcolor with the normalized hex
-	cmd := exec.Command(it2bin, "tab", color)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to run %s: %v\n", it2bin, err)
+	if err := runSetTabColor(os.Args[1]); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }
