@@ -8,6 +8,9 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+// Global verbose flag for debugging output
+var verboseMode bool
+
 // Profile represents a color profile with optional colors and preset
 type Profile struct {
 	Tab        string `toml:"tab,omitempty"`
@@ -28,7 +31,20 @@ func getConfigPath() (string, error) {
 		return configPath, nil
 	}
 
-	// Default to ~/.config/set-tab-color.toml
+	// Prefer ~/.config/set-tab-color.toml on all platforms (including macOS)
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		configPath := filepath.Join(homeDir, ".config", "set-tab-color.toml")
+		// Check if ~/.config directory exists or the config file exists
+		if _, err := os.Stat(filepath.Dir(configPath)); err == nil {
+			return configPath, nil
+		}
+		if _, err := os.Stat(configPath); err == nil {
+			return configPath, nil
+		}
+	}
+
+	// Fall back to OS-specific config directory (~/Library/Application Support on macOS)
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		return "", fmt.Errorf("could not get config directory: %v", err)
@@ -139,22 +155,48 @@ func getProfileWithTerminalInfo(profileName string, terminalInfo *TerminalShellI
 		return nil, fmt.Errorf("profile %q is not a valid profile", profileName)
 	}
 
+	if verboseMode {
+		fmt.Fprintf(os.Stderr, "Using base profile: %q\n", profileName)
+		fmt.Fprintf(os.Stderr, "  Base profile values: tab=%q, fg=%q, bg=%q, preset=%q\n",
+			baseProfile.Tab, baseProfile.Foreground, baseProfile.Background, baseProfile.Preset)
+	}
+
 	// Start with base profile
 	result := *baseProfile
-
-	// Use provided terminal info or detect it
-	var terminalShellInfo TerminalShellInfo
-	if terminalInfo != nil {
-		terminalShellInfo = *terminalInfo
-	} else {
-		terminalShellInfo = detectTerminalAndShell()
-	}
 
 	// Get the nested map for this profile to look for sub-profiles
 	profileMap, ok := baseData.(map[string]interface{})
 	if !ok {
 		// No nested structure, just return base profile
+		if verboseMode {
+			fmt.Fprintf(os.Stderr, "No sub-profiles available for profile %q\n", profileName)
+		}
 		return &result, nil
+	}
+
+	// Use provided terminal info or detect it (only when sub-profiles are available)
+	var terminalShellInfo TerminalShellInfo
+	if terminalInfo != nil {
+		terminalShellInfo = *terminalInfo
+	} else {
+		terminalShellInfo = detectTerminalAndShell()
+		if verboseMode {
+			fmt.Fprintf(os.Stderr, "Terminal detection: %s\n", terminalShellInfo.Terminal)
+			fmt.Fprintf(os.Stderr, "Shell detection: %s\n", terminalShellInfo.Shell)
+			fmt.Fprintf(os.Stderr, "Detection valid: %v", terminalShellInfo.Valid)
+			if !terminalShellInfo.Valid {
+				fmt.Fprintf(os.Stderr, " (shell should come before terminal)")
+			}
+			fmt.Fprintf(os.Stderr, "\n")
+
+			if chain, err := getProcessAncestorChain(); err == nil {
+				fmt.Fprintf(os.Stderr, "Process ancestor chain:\n")
+				for i, processName := range chain {
+					fmt.Fprintf(os.Stderr, "  %d: %s\n", i, processName)
+				}
+			}
+			fmt.Fprintf(os.Stderr, "\n")
+		}
 	}
 
 	// Apply shell-specific overlay first (if it exists)
@@ -162,8 +204,15 @@ func getProfileWithTerminalInfo(profileName string, terminalInfo *TerminalShellI
 		shellKey := string(terminalShellInfo.Shell)
 		if shellData, exists := profileMap[shellKey]; exists {
 			if shellProfile, err := extractProfile(shellData); err == nil {
+				if verboseMode {
+					fmt.Fprintf(os.Stderr, "Applying shell-specific sub-profile: %s.%s\n", profileName, shellKey)
+					fmt.Fprintf(os.Stderr, "  Shell sub-profile values: tab=%q, fg=%q, bg=%q, preset=%q\n",
+						shellProfile.Tab, shellProfile.Foreground, shellProfile.Background, shellProfile.Preset)
+				}
 				result = overlayProfile(result, *shellProfile)
 			}
+		} else if verboseMode {
+			fmt.Fprintf(os.Stderr, "No shell-specific sub-profile found for: %s.%s\n", profileName, shellKey)
 		}
 	}
 
@@ -172,9 +221,21 @@ func getProfileWithTerminalInfo(profileName string, terminalInfo *TerminalShellI
 		terminalKey := string(terminalShellInfo.Terminal)
 		if terminalData, exists := profileMap[terminalKey]; exists {
 			if terminalProfile, err := extractProfile(terminalData); err == nil {
+				if verboseMode {
+					fmt.Fprintf(os.Stderr, "Applying terminal-specific sub-profile: %s.%s\n", profileName, terminalKey)
+					fmt.Fprintf(os.Stderr, "  Terminal sub-profile values: tab=%q, fg=%q, bg=%q, preset=%q\n",
+						terminalProfile.Tab, terminalProfile.Foreground, terminalProfile.Background, terminalProfile.Preset)
+				}
 				result = overlayProfile(result, *terminalProfile)
 			}
+		} else if verboseMode {
+			fmt.Fprintf(os.Stderr, "No terminal-specific sub-profile found for: %s.%s\n", profileName, terminalKey)
 		}
+	}
+
+	if verboseMode {
+		fmt.Fprintf(os.Stderr, "Final profile values after overlays: tab=%q, fg=%q, bg=%q, preset=%q\n",
+			result.Tab, result.Foreground, result.Background, result.Preset)
 	}
 
 	return &result, nil
@@ -203,8 +264,15 @@ func overlayProfile(base Profile, overlay Profile) Profile {
 
 // applyProfile applies a profile's colors using the existing runSetColor function
 func applyProfile(profile *Profile) error {
+	if verboseMode {
+		fmt.Fprintf(os.Stderr, "\nApplying profile settings:\n")
+	}
+
 	// Apply preset first if specified (so individual colors can override it)
 	if profile.Preset != "" {
+		if verboseMode {
+			fmt.Fprintf(os.Stderr, "  Setting preset: %q\n", profile.Preset)
+		}
 		if err := runSetPreset(profile.Preset); err != nil {
 			return fmt.Errorf("error setting preset from profile: %v", err)
 		}
@@ -212,6 +280,9 @@ func applyProfile(profile *Profile) error {
 
 	// Set tab color if specified (overrides preset)
 	if profile.Tab != "" {
+		if verboseMode {
+			fmt.Fprintf(os.Stderr, "  Setting tab color: %q\n", profile.Tab)
+		}
 		if err := runSetColor(TabColor, profile.Tab); err != nil {
 			return fmt.Errorf("error setting tab color from profile: %v", err)
 		}
@@ -219,6 +290,9 @@ func applyProfile(profile *Profile) error {
 
 	// Set foreground color if specified (overrides preset)
 	if profile.Foreground != "" {
+		if verboseMode {
+			fmt.Fprintf(os.Stderr, "  Setting foreground color: %q\n", profile.Foreground)
+		}
 		if err := runSetColor(ForegroundColor, profile.Foreground); err != nil {
 			return fmt.Errorf("error setting foreground color from profile: %v", err)
 		}
@@ -226,9 +300,16 @@ func applyProfile(profile *Profile) error {
 
 	// Set background color if specified (overrides preset)
 	if profile.Background != "" {
+		if verboseMode {
+			fmt.Fprintf(os.Stderr, "  Setting background color: %q\n", profile.Background)
+		}
 		if err := runSetColor(BackgroundColor, profile.Background); err != nil {
 			return fmt.Errorf("error setting background color from profile: %v", err)
 		}
+	}
+
+	if verboseMode {
+		fmt.Fprintf(os.Stderr, "Profile application complete.\n")
 	}
 
 	return nil

@@ -40,25 +40,8 @@ func main() {
 
 	flag.Parse()
 
-	// Show terminal and shell detection information if verbose flag is enabled
-	if *verbose {
-		info := detectTerminalAndShell()
-		fmt.Fprintf(os.Stderr, "Terminal detection: %s\n", info.Terminal)
-		fmt.Fprintf(os.Stderr, "Shell detection: %s\n", info.Shell)
-		fmt.Fprintf(os.Stderr, "Detection valid: %v", info.Valid)
-		if !info.Valid {
-			fmt.Fprintf(os.Stderr, " (shell should come before terminal)")
-		}
-		fmt.Fprintf(os.Stderr, "\n")
-
-		if chain, err := getProcessAncestorChain(); err == nil {
-			fmt.Fprintf(os.Stderr, "Process ancestor chain:\n")
-			for i, processName := range chain {
-				fmt.Fprintf(os.Stderr, "  %d: %s\n", i, processName)
-			}
-		}
-		fmt.Fprintf(os.Stderr, "\n")
-	}
+	// Set global verbose mode
+	verboseMode = *verbose
 
 	// Handle listing operations
 	if *listProfiles {
