@@ -8,11 +8,12 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-// Profile represents a color profile with optional colors
+// Profile represents a color profile with optional colors and preset
 type Profile struct {
 	Tab        string `toml:"tab,omitempty"`
 	Foreground string `toml:"fg,omitempty"`
 	Background string `toml:"bg,omitempty"`
+	Preset     string `toml:"preset,omitempty"`
 }
 
 // Config represents the TOML configuration file structure with nested profiles
@@ -94,13 +95,19 @@ func extractProfile(data interface{}) (*Profile, error) {
 		}
 	}
 
+	if preset, ok := m["preset"]; ok {
+		if presetStr, ok := preset.(string); ok {
+			profile.Preset = presetStr
+		}
+	}
+
 	return profile, nil
 }
 
 // isProfileMap checks if a map contains profile-like keys
 func isProfileMap(m map[string]interface{}) bool {
 	for key := range m {
-		if key == "tab" || key == "fg" || key == "bg" {
+		if key == "tab" || key == "fg" || key == "bg" || key == "preset" {
 			return true
 		}
 	}
@@ -187,27 +194,37 @@ func overlayProfile(base Profile, overlay Profile) Profile {
 	if overlay.Background != "" {
 		result.Background = overlay.Background
 	}
+	if overlay.Preset != "" {
+		result.Preset = overlay.Preset
+	}
 
 	return result
 }
 
 // applyProfile applies a profile's colors using the existing runSetColor function
 func applyProfile(profile *Profile) error {
-	// Set tab color if specified
+	// Apply preset first if specified (so individual colors can override it)
+	if profile.Preset != "" {
+		if err := runSetPreset(profile.Preset); err != nil {
+			return fmt.Errorf("error setting preset from profile: %v", err)
+		}
+	}
+
+	// Set tab color if specified (overrides preset)
 	if profile.Tab != "" {
 		if err := runSetColor(TabColor, profile.Tab); err != nil {
 			return fmt.Errorf("error setting tab color from profile: %v", err)
 		}
 	}
 
-	// Set foreground color if specified
+	// Set foreground color if specified (overrides preset)
 	if profile.Foreground != "" {
 		if err := runSetColor(ForegroundColor, profile.Foreground); err != nil {
 			return fmt.Errorf("error setting foreground color from profile: %v", err)
 		}
 	}
 
-	// Set background color if specified
+	// Set background color if specified (overrides preset)
 	if profile.Background != "" {
 		if err := runSetColor(BackgroundColor, profile.Background); err != nil {
 			return fmt.Errorf("error setting background color from profile: %v", err)

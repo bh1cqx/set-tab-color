@@ -12,6 +12,7 @@ func main() {
 		tabColor        = flag.String("tab", "", "Set tab color")
 		foregroundColor = flag.String("fg", "", "Set foreground color")
 		backgroundColor = flag.String("bg", "", "Set background color")
+		presetName      = flag.String("preset", "", "Set iTerm2 color preset")
 		profileName     = flag.String("profile", "", "Use predefined profile from config file")
 		listProfiles    = flag.Bool("list-profiles", false, "List all available profiles")
 		listColors      = flag.Bool("list-colors", false, "List all available CSS color names")
@@ -32,6 +33,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  %s -tab red\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s -fg white -bg black\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s -tab #ff8800 -fg lightblue\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "  %s -preset 'Solarized Dark'\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "  %s -preset 'Ocean' -tab red\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s -profile myprofile\n", os.Args[0])
 	}
 
@@ -90,9 +93,9 @@ func main() {
 
 	// Handle profile-based configuration
 	if *profileName != "" {
-		// Cannot mix profile with individual colors
-		if *tabColor != "" || *foregroundColor != "" || *backgroundColor != "" {
-			fmt.Fprintf(os.Stderr, "Error: Cannot use -profile with individual color options\n\n")
+		// Cannot mix profile with individual colors or preset
+		if *tabColor != "" || *foregroundColor != "" || *backgroundColor != "" || *presetName != "" {
+			fmt.Fprintf(os.Stderr, "Error: Cannot use -profile with individual color options or -preset\n\n")
 			flag.Usage()
 			os.Exit(1)
 		}
@@ -110,14 +113,22 @@ func main() {
 		return
 	}
 
-	// Check if at least one color option was provided
-	if *tabColor == "" && *foregroundColor == "" && *backgroundColor == "" {
-		fmt.Fprintf(os.Stderr, "Error: At least one color option or profile must be specified\n\n")
+	// Check if at least one color option or preset was provided
+	if *tabColor == "" && *foregroundColor == "" && *backgroundColor == "" && *presetName == "" {
+		fmt.Fprintf(os.Stderr, "Error: At least one color option, preset, or profile must be specified\n\n")
 		flag.Usage()
 		os.Exit(1)
 	}
 
-	// Set colors based on provided arguments
+	// Apply preset first if specified (so individual colors can override it)
+	if *presetName != "" {
+		if err := runSetPreset(*presetName); err != nil {
+			fmt.Fprintf(os.Stderr, "Error setting preset: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	// Set colors based on provided arguments (these override preset settings)
 	if *tabColor != "" {
 		if err := runSetColor(TabColor, *tabColor); err != nil {
 			fmt.Fprintf(os.Stderr, "Error setting tab color: %v\n", err)

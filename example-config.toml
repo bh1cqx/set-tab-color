@@ -46,6 +46,18 @@ fg = "white"
 tab = "orange"
 fg = "black"
 
+# Profiles using iTerm2 presets
+[profiles.ocean-theme]
+preset = "Ocean"
+tab = "cyan"  # Override tab color from preset
+
+[profiles.solarized]
+preset = "Solarized Dark"
+
+[profiles.dracula]
+preset = "Dracula"
+fg = "white"  # Override foreground from preset
+
 # Sub-profiles with shell-specific overrides
 # These override the base profile settings when running in specific shells
 

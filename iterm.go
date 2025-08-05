@@ -46,3 +46,23 @@ func runSetColor(target ColorTarget, color string) error {
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
+
+// runSetPreset executes it2setcolor preset with the given preset name
+func runSetPreset(presetName string) error {
+	// Locate and check existence of custom it2setcolor in ~/.iterm2/
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("could not get home dir: %v", err)
+	}
+	it2bin := filepath.Join(home, ".iterm2", "it2setcolor")
+
+	if _, err := os.Stat(it2bin); os.IsNotExist(err) {
+		return fmt.Errorf("it2setcolor not found at %s", it2bin)
+	}
+
+	// Execute it2setcolor preset with the preset name
+	cmd := exec.Command(it2bin, "preset", presetName)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}

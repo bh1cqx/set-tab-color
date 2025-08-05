@@ -39,6 +39,12 @@ go build -o set-tab-color
 
 # Mix hex colors and CSS names
 ./set-tab-color -tab blue -fg #ffffff
+
+# Use an iTerm2 preset
+./set-tab-color -preset "Solarized Dark"
+
+# Use preset with individual color overrides
+./set-tab-color -preset "Ocean" -tab red
 ```
 
 ### Profile Usage
@@ -91,8 +97,11 @@ bg = "default"
 - `tab`: Tab color (optional)
 - `fg`: Foreground/text color (optional)
 - `bg`: Background color (optional)
+- `preset`: iTerm2 color preset name (optional)
 
 Any combination of these properties can be specified in a profile. Unspecified colors will remain unchanged.
+
+When both a preset and individual colors are specified in a profile, the preset is applied first and individual colors override the preset settings.
 
 ### Sub-Profiles
 
@@ -214,6 +223,18 @@ fg = "white"
 [profiles.warning]
 tab = "orange"
 fg = "black"
+
+# Profiles using iTerm2 presets
+[profiles.ocean-theme]
+preset = "Ocean"
+tab = "cyan"  # Override tab color from preset
+
+[profiles.solarized]
+preset = "Solarized Dark"
+
+[profiles.dracula]
+preset = "Dracula"
+fg = "white"  # Override foreground from preset
 ```
 
 ## Error Handling
