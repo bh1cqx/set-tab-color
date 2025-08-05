@@ -1,15 +1,14 @@
 package main
 
 import (
-	"encoding/json"
 	"testing"
 )
 
 // TestNormalizeColor tests the color normalization function
 func TestNormalizeColor(t *testing.T) {
-	// Initialize cssColors for testing
-	if err := json.Unmarshal(cssColorsJSON, &cssColors); err != nil {
-		t.Fatalf("Failed to parse embedded CSS colors: %v", err)
+	// cssColors is now initialized from the generated package
+	if err := initColors(); err != nil {
+		t.Fatalf("Failed to initialize CSS colors: %v", err)
 	}
 
 	tests := []struct {
@@ -94,18 +93,13 @@ func TestIsHex(t *testing.T) {
 
 // TestInitColors tests the color map initialization
 func TestInitColors(t *testing.T) {
-	// Reset cssColors to test initialization
-	originalColors := cssColors
-	cssColors = nil
-	defer func() { cssColors = originalColors }()
-
 	err := initColors()
 	if err != nil {
 		t.Fatalf("initColors() failed: %v", err)
 	}
 
 	if cssColors == nil {
-		t.Error("cssColors should be initialized after initColors()")
+		t.Error("cssColors should be initialized")
 	}
 
 	// Test that some known colors exist
@@ -114,5 +108,10 @@ func TestInitColors(t *testing.T) {
 		if _, ok := cssColors[color]; !ok {
 			t.Errorf("Expected color %q to be in cssColors map", color)
 		}
+	}
+
+	// Test that we have a reasonable number of colors (should be 148 from the generated file)
+	if len(cssColors) < 100 {
+		t.Errorf("Expected at least 100 colors, got %d", len(cssColors))
 	}
 }

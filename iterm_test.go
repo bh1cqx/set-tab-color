@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,8 +9,8 @@ import (
 // TestRunSetColor tests the iTerm2 integration with mocked binary
 func TestRunSetColor(t *testing.T) {
 	// Initialize cssColors for testing
-	if err := json.Unmarshal(cssColorsJSON, &cssColors); err != nil {
-		t.Fatalf("Failed to parse embedded CSS colors: %v", err)
+	if err := initColors(); err != nil {
+		t.Fatalf("Failed to initialize CSS colors: %v", err)
 	}
 
 	tests := []struct {
@@ -115,8 +114,8 @@ func TestRunSetColor(t *testing.T) {
 // TestRunSetColorMissingBinary tests behavior when it2setcolor is missing
 func TestRunSetColorMissingBinary(t *testing.T) {
 	// Initialize cssColors for testing
-	if err := json.Unmarshal(cssColorsJSON, &cssColors); err != nil {
-		t.Fatalf("Failed to parse embedded CSS colors: %v", err)
+	if err := initColors(); err != nil {
+		t.Fatalf("Failed to initialize CSS colors: %v", err)
 	}
 
 	// Create temp directory without the binary

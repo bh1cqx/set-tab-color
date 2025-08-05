@@ -1,24 +1,15 @@
 package main
 
 import (
-	_ "embed"
-	"encoding/json"
-	"fmt"
 	"strings"
+
+	"github.com/bh1cqx/set-tab-color/generated"
 )
 
-//go:embed css-color-names/css-color-names.json
-var cssColorsJSON []byte
+var cssColors = generated.CSSColors
 
-var cssColors map[string]string
-
-// initColors initializes the CSS color map from embedded JSON
+// initColors is no longer needed since cssColors is initialized directly
 func initColors() error {
-	if cssColors == nil {
-		if err := json.Unmarshal(cssColorsJSON, &cssColors); err != nil {
-			return fmt.Errorf("error parsing embedded css-colors.json: %v", err)
-		}
-	}
 	return nil
 }
 

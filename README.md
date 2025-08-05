@@ -28,10 +28,20 @@ go install github.com/bh1cqx/set-tab-color@latest
 ### Build from Source
 
 ```bash
-git clone https://github.com/bh1cqx/set-tab-color.git
+git clone --recurse-submodules https://github.com/bh1cqx/set-tab-color.git
 cd set-tab-color
+make generate-colors  # Generate CSS color data (only needed for development)
 go build -o set-tab-color
 ```
+
+#### Development Notes
+
+The project uses a git submodule to track CSS color names from [bahamas10/css-color-names](https://github.com/bahamas10/css-color-names). The color data is converted to Go source code and committed to the repository for `go install` compatibility.
+
+To update CSS color data:
+1. Update the submodule: `git submodule update --remote css-color-names`
+2. Regenerate Go source: `make generate-colors`
+3. Commit the updated `generated/css_colors.go` file
 
 ## Usage
 

@@ -1,4 +1,8 @@
-.PHONY: build compile release clean test
+.PHONY: build compile release clean test generate-colors
+
+# Generate CSS colors from submodule
+generate-colors:
+	go run cmd/generate-colors/main.go
 
 # Default target - compile then run tests
 build: compile test
