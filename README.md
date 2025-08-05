@@ -19,7 +19,17 @@ A command-line tool to set iTerm2 tab, foreground, and background colors with su
 
 ## Installation
 
+### Install from GitHub (Recommended)
+
 ```bash
+go install github.com/bh1cqx/set-tab-color@latest
+```
+
+### Build from Source
+
+```bash
+git clone https://github.com/bh1cqx/set-tab-color.git
+cd set-tab-color
 go build -o set-tab-color
 ```
 
@@ -29,29 +39,29 @@ go build -o set-tab-color
 
 ```bash
 # Set tab color only
-./set-tab-color -tab red
+set-tab-color -tab red
 
 # Set foreground and background colors
-./set-tab-color -fg white -bg black
+set-tab-color -fg white -bg black
 
 # Set all three colors
-./set-tab-color -tab #ff8800 -fg lightblue -bg darkgray
+set-tab-color -tab #ff8800 -fg lightblue -bg darkgray
 
 # Mix hex colors and CSS names
-./set-tab-color -tab blue -fg #ffffff
+set-tab-color -tab blue -fg #ffffff
 
 # Use an iTerm2 preset
-./set-tab-color -preset "Solarized Dark"
+set-tab-color -preset "Solarized Dark"
 
 # Use preset with individual color overrides
-./set-tab-color -preset "Ocean" -tab red
+set-tab-color -preset "Ocean" -tab red
 ```
 
 ### Profile Usage
 
 ```bash
 # Use a predefined profile
-./set-tab-color -profile development
+set-tab-color -profile development
 ```
 
 ## Configuration
@@ -157,7 +167,7 @@ bg = "black"
 
 #### Example Sub-Profile Behavior
 
-With the configuration above, running `./set-tab-color -profile dev` will result in:
+With the configuration above, running `set-tab-color -profile dev` will result in:
 
 - **zsh in iTerm2**: tab=purple (terminal override), fg=yellow (shell override), bg=black (terminal override)
 - **bash in iTerm2**: tab=purple (terminal override), fg=white (base), bg=black (terminal override)
@@ -185,16 +195,16 @@ With the configuration above, running `./set-tab-color -profile dev` will result
 
 ```bash
 # Development environment - blue tab, white text on black background
-./set-tab-color -profile development
+set-tab-color -profile development
 
 # Production warning - red tab with yellow text
-./set-tab-color -profile production
+set-tab-color -profile production
 
 # Quick color change
-./set-tab-color -tab green -fg white
+set-tab-color -tab green -fg white
 
 # Reset to defaults
-./set-tab-color -profile reset
+set-tab-color -profile reset
 ```
 
 ### Configuration Examples
