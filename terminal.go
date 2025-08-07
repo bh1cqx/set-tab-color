@@ -162,8 +162,8 @@ func matchesTerminalName(processName, terminalName string, caseSensitive bool) b
 		return true
 	}
 
-	// Prefix match with space
-	if strings.HasPrefix(name, terminal+" ") {
+	// Prefix match with space or colon (e.g., "tmux: server")
+	if strings.HasPrefix(name, terminal+" ") || strings.HasPrefix(name, terminal+":") {
 		return true
 	}
 
