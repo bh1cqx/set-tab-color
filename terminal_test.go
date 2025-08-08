@@ -5,11 +5,11 @@ import (
 )
 
 func TestDetectTerminalType(t *testing.T) {
-	// This test will detect the actual terminal type running the tests
-	terminalType := detectTerminalType()
+	// This test will detect the actual terminal types running the tests
+	info := detectTerminalAndShell()
 
-	// We can't assert a specific value since it depends on the environment
-	// but we can ensure it returns a valid type
+	// We can't assert specific values since it depends on the environment
+	// but we can ensure it returns valid types
 	validTypes := []TerminalType{
 		TerminalTypeUnknown,
 		TerminalTypeITerm2,
@@ -19,19 +19,21 @@ func TestDetectTerminalType(t *testing.T) {
 		TerminalTypeVSCode,
 	}
 
-	found := false
-	for _, validType := range validTypes {
-		if terminalType == validType {
-			found = true
-			break
+	for _, terminalType := range info.Terminals {
+		found := false
+		for _, validType := range validTypes {
+			if terminalType == validType {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			t.Errorf("detectTerminalAndShell() returned invalid type: %s", terminalType)
 		}
 	}
 
-	if !found {
-		t.Errorf("detectTerminalType() returned invalid type: %s", terminalType)
-	}
-
-	t.Logf("Detected terminal type: %s", terminalType)
+	t.Logf("Detected terminal types: %v", info.Terminals)
 }
 
 func TestTerminalAndShellDetection(t *testing.T) {
@@ -39,22 +41,17 @@ func TestTerminalAndShellDetection(t *testing.T) {
 	info := detectTerminalAndShell()
 
 	t.Logf("Combined detection results:")
-	t.Logf("  Terminal: %v", info.Terminal)
+	t.Logf("  Terminals: %v", info.Terminals)
 	t.Logf("  Shell: %v", info.Shell)
 	t.Logf("  Valid: %v", info.Valid)
 
 	// Test individual detection functions for backwards compatibility
-	terminalType := detectTerminalType()
 	shellType := detectShellType()
 
 	t.Logf("Individual detection results:")
-	t.Logf("  detectTerminalType() returned: %v", terminalType)
 	t.Logf("  detectShellType() returned: %v", shellType)
 
 	// Verify consistency
-	if terminalType != info.Terminal {
-		t.Errorf("detectTerminalType() = %v, but detectTerminalAndShell().Terminal = %v", terminalType, info.Terminal)
-	}
 	if shellType != info.Shell {
 		t.Errorf("detectShellType() = %v, but detectTerminalAndShell().Shell = %v", shellType, info.Shell)
 	}
@@ -214,7 +211,7 @@ func TestIsTerminalInAncestorChain(t *testing.T) {
 // BenchmarkDetectTerminalType benchmarks the terminal detection performance
 func BenchmarkDetectTerminalType(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = detectTerminalType()
+		_ = detectTerminalAndShell()
 	}
 }
 

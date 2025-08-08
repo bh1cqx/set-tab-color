@@ -181,7 +181,7 @@ func getProfileWithTerminalInfo(profileName string, terminalInfo *TerminalShellI
 	} else {
 		terminalShellInfo = detectTerminalAndShell()
 		if verboseMode {
-			fmt.Fprintf(os.Stderr, "Terminal detection: %s\n", terminalShellInfo.Terminal)
+			fmt.Fprintf(os.Stderr, "Terminal detection: %v\n", terminalShellInfo.Terminals)
 			fmt.Fprintf(os.Stderr, "Shell detection: %s\n", terminalShellInfo.Shell)
 			fmt.Fprintf(os.Stderr, "Detection valid: %v", terminalShellInfo.Valid)
 			if !terminalShellInfo.Valid {
@@ -217,8 +217,14 @@ func getProfileWithTerminalInfo(profileName string, terminalInfo *TerminalShellI
 	}
 
 	// Apply terminal-specific overlay last (takes priority)
-	if terminalShellInfo.Terminal != TerminalTypeUnknown {
-		terminalKey := string(terminalShellInfo.Terminal)
+	// Try terminals in order until we find one with a subprofile
+	var appliedTerminalProfile bool
+	if verboseMode {
+		fmt.Fprintf(os.Stderr, "Checking terminals for sub-profiles: %v\n", terminalShellInfo.Terminals)
+	}
+
+	for _, terminal := range terminalShellInfo.Terminals {
+		terminalKey := string(terminal)
 		if terminalData, exists := profileMap[terminalKey]; exists {
 			if terminalProfile, err := extractProfile(terminalData); err == nil {
 				if verboseMode {
@@ -227,10 +233,16 @@ func getProfileWithTerminalInfo(profileName string, terminalInfo *TerminalShellI
 						terminalProfile.Tab, terminalProfile.Foreground, terminalProfile.Background, terminalProfile.Preset)
 				}
 				result = overlayProfile(result, *terminalProfile)
+				appliedTerminalProfile = true
+				break // Use the first terminal that has a subprofile
 			}
 		} else if verboseMode {
 			fmt.Fprintf(os.Stderr, "No terminal-specific sub-profile found for: %s.%s\n", profileName, terminalKey)
 		}
+	}
+
+	if !appliedTerminalProfile && len(terminalShellInfo.Terminals) > 0 && verboseMode {
+		fmt.Fprintf(os.Stderr, "No terminal sub-profiles found for any terminal in the process chain\n")
 	}
 
 	if verboseMode {

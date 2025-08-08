@@ -114,9 +114,9 @@ tab = "green"
 
 	// Now test the actual profile values using getProfile
 	devProfile, err := getProfileWithTerminalInfo("development", &TerminalShellInfo{
-		Terminal: TerminalTypeUnknown,
-		Shell:    ShellTypeUnknown,
-		Valid:    false,
+		Terminals: []TerminalType{},
+		Shell:     ShellTypeUnknown,
+		Valid:     false,
 	})
 	if err != nil {
 		t.Fatalf("Failed to get development profile: %v", err)
@@ -127,9 +127,9 @@ tab = "green"
 
 	// Test production profile values
 	prodProfile, err := getProfileWithTerminalInfo("production", &TerminalShellInfo{
-		Terminal: TerminalTypeUnknown,
-		Shell:    ShellTypeUnknown,
-		Valid:    false,
+		Terminals: []TerminalType{},
+		Shell:     ShellTypeUnknown,
+		Valid:     false,
 	})
 	if err != nil {
 		t.Fatalf("Failed to get production profile: %v", err)
@@ -140,9 +140,9 @@ tab = "green"
 
 	// Test minimal profile values
 	minimalProfile, err := getProfileWithTerminalInfo("minimal", &TerminalShellInfo{
-		Terminal: TerminalTypeUnknown,
-		Shell:    ShellTypeUnknown,
-		Valid:    false,
+		Terminals: []TerminalType{},
+		Shell:     ShellTypeUnknown,
+		Valid:     false,
 	})
 	if err != nil {
 		t.Fatalf("Failed to get minimal profile: %v", err)
@@ -247,9 +247,9 @@ fg = "white"
 
 	// Test existing profile with no terminal/shell info to avoid sub-profile interference
 	profile, err := getProfileWithTerminalInfo("test-profile", &TerminalShellInfo{
-		Terminal: TerminalTypeUnknown,
-		Shell:    ShellTypeUnknown,
-		Valid:    false,
+		Terminals: []TerminalType{},
+		Shell:     ShellTypeUnknown,
+		Valid:     false,
 	})
 	if err != nil {
 		t.Fatalf("getProfileWithTerminalInfo() failed: %v", err)
@@ -261,9 +261,9 @@ fg = "white"
 
 	// Test non-existent profile
 	_, err = getProfileWithTerminalInfo("non-existent", &TerminalShellInfo{
-		Terminal: TerminalTypeUnknown,
-		Shell:    ShellTypeUnknown,
-		Valid:    false,
+		Terminals: []TerminalType{},
+		Shell:     ShellTypeUnknown,
+		Valid:     false,
 	})
 	if err == nil {
 		t.Error("Expected getProfileWithTerminalInfo() to fail for non-existent profile")
@@ -399,9 +399,9 @@ fg = "yellow"
 
 	// Test base profile (no terminal/shell info)
 	profile, err := getProfileWithTerminalInfo("dev", &TerminalShellInfo{
-		Terminal: TerminalTypeUnknown,
-		Shell:    ShellTypeUnknown,
-		Valid:    false,
+		Terminals: []TerminalType{},
+		Shell:     ShellTypeUnknown,
+		Valid:     false,
 	})
 	if err != nil {
 		t.Fatalf("getProfileWithTerminalInfo() failed: %v", err)
@@ -412,9 +412,9 @@ fg = "yellow"
 
 	// Test shell-only overlay
 	profile, err = getProfileWithTerminalInfo("dev", &TerminalShellInfo{
-		Terminal: TerminalTypeUnknown,
-		Shell:    ShellTypeZsh,
-		Valid:    true,
+		Terminals: []TerminalType{},
+		Shell:     ShellTypeZsh,
+		Valid:     true,
 	})
 	if err != nil {
 		t.Fatalf("getProfileWithTerminalInfo() with zsh failed: %v", err)
@@ -425,9 +425,9 @@ fg = "yellow"
 
 	// Test terminal-only overlay
 	profile, err = getProfileWithTerminalInfo("dev", &TerminalShellInfo{
-		Terminal: TerminalTypeITerm2,
-		Shell:    ShellTypeUnknown,
-		Valid:    true,
+		Terminals: []TerminalType{TerminalTypeITerm2},
+		Shell:     ShellTypeUnknown,
+		Valid:     true,
 	})
 	if err != nil {
 		t.Fatalf("getProfileWithTerminalInfo() with iterm2 failed: %v", err)
@@ -438,9 +438,9 @@ fg = "yellow"
 
 	// Test both shell and terminal overlays (terminal should take priority)
 	profile, err = getProfileWithTerminalInfo("dev", &TerminalShellInfo{
-		Terminal: TerminalTypeITerm2,
-		Shell:    ShellTypeZsh,
-		Valid:    true,
+		Terminals: []TerminalType{TerminalTypeITerm2},
+		Shell:     ShellTypeZsh,
+		Valid:     true,
 	})
 	if err != nil {
 		t.Fatalf("getProfileWithTerminalInfo() with zsh+iterm2 failed: %v", err)
@@ -452,9 +452,9 @@ fg = "yellow"
 
 	// Test SSH terminal override
 	profile, err = getProfileWithTerminalInfo("prod", &TerminalShellInfo{
-		Terminal: TerminalTypeSSH,
-		Shell:    ShellTypeUnknown,
-		Valid:    true,
+		Terminals: []TerminalType{TerminalTypeSSH},
+		Shell:     ShellTypeUnknown,
+		Valid:     true,
 	})
 	if err != nil {
 		t.Fatalf("getProfileWithTerminalInfo() with SSH failed: %v", err)
