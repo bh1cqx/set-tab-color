@@ -14,6 +14,7 @@ func main() {
 		backgroundColor = flag.String("bg", "", "Set background color")
 		presetName      = flag.String("preset", "", "Set iTerm2 color preset")
 		profileName     = flag.String("profile", "", "Use predefined profile from config file")
+		terminalType    = flag.String("terminal", "", "Override terminal type for subprofile selection (iterm2, vscode, ssh, tmux, etterminal)")
 		listProfiles    = flag.Bool("list-profiles", false, "List all available profiles")
 		listColors      = flag.Bool("list-colors", false, "List all available CSS color names")
 		verbose         = flag.Bool("verbose", false, "Enable verbose output for debugging")
@@ -36,6 +37,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  %s -preset 'Solarized Dark'\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s -preset 'Ocean' -tab red\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s -profile myprofile\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "  %s -profile myprofile -terminal iterm2\n", os.Args[0])
 	}
 
 	flag.Parse()
@@ -74,6 +76,13 @@ func main() {
 		return
 	}
 
+	// Validate terminal type if specified without profile
+	if *terminalType != "" && *profileName == "" {
+		fmt.Fprintf(os.Stderr, "Error: -terminal option can only be used with -profile\n\n")
+		flag.Usage()
+		os.Exit(1)
+	}
+
 	// Handle profile-based configuration
 	if *profileName != "" {
 		// Cannot mix profile with individual colors or preset
@@ -83,7 +92,8 @@ func main() {
 			os.Exit(1)
 		}
 
-		profile, err := getProfile(*profileName)
+		terminalInfo := detectTerminalAndShell(*terminalType)
+		profile, err := getProfileWithTerminalInfo(*profileName, &terminalInfo)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error loading profile: %v\n", err)
 			os.Exit(1)

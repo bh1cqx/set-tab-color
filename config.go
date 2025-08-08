@@ -130,11 +130,6 @@ func isProfileMap(m map[string]interface{}) bool {
 	return false
 }
 
-// getProfile retrieves a specific profile by name with sub-profile overlays
-func getProfile(profileName string) (*Profile, error) {
-	return getProfileWithTerminalInfo(profileName, nil)
-}
-
 // getProfileWithTerminalInfo retrieves a profile with optional terminal info override (for testing)
 func getProfileWithTerminalInfo(profileName string, terminalInfo *TerminalShellInfo) (*Profile, error) {
 	config, err := loadConfig()
@@ -174,29 +169,24 @@ func getProfileWithTerminalInfo(profileName string, terminalInfo *TerminalShellI
 		return &result, nil
 	}
 
-	// Use provided terminal info or detect it (only when sub-profiles are available)
-	var terminalShellInfo TerminalShellInfo
-	if terminalInfo != nil {
-		terminalShellInfo = *terminalInfo
-	} else {
-		terminalShellInfo = detectTerminalAndShell()
-		if verboseMode {
-			fmt.Fprintf(os.Stderr, "Terminal detection: %v\n", terminalShellInfo.Terminals)
-			fmt.Fprintf(os.Stderr, "Shell detection: %s\n", terminalShellInfo.Shell)
-			fmt.Fprintf(os.Stderr, "Detection valid: %v", terminalShellInfo.Valid)
-			if !terminalShellInfo.Valid {
-				fmt.Fprintf(os.Stderr, " (shell should come before terminal)")
-			}
-			fmt.Fprintf(os.Stderr, "\n")
-
-			if chain, err := getProcessAncestorChain(); err == nil {
-				fmt.Fprintf(os.Stderr, "Process ancestor chain:\n")
-				for i, processName := range chain {
-					fmt.Fprintf(os.Stderr, "  %d: %s\n", i, processName)
-				}
-			}
-			fmt.Fprintf(os.Stderr, "\n")
+	// Use provided terminal info (caller must always provide it)
+	terminalShellInfo := *terminalInfo
+	if verboseMode {
+		fmt.Fprintf(os.Stderr, "Terminal detection: %v\n", terminalShellInfo.Terminals)
+		fmt.Fprintf(os.Stderr, "Shell detection: %s\n", terminalShellInfo.Shell)
+		fmt.Fprintf(os.Stderr, "Detection valid: %v", terminalShellInfo.Valid)
+		if !terminalShellInfo.Valid {
+			fmt.Fprintf(os.Stderr, " (shell should come before terminal)")
 		}
+		fmt.Fprintf(os.Stderr, "\n")
+
+		if chain, err := getProcessAncestorChain(); err == nil {
+			fmt.Fprintf(os.Stderr, "Process ancestor chain:\n")
+			for i, processName := range chain {
+				fmt.Fprintf(os.Stderr, "  %d: %s\n", i, processName)
+			}
+		}
+		fmt.Fprintf(os.Stderr, "\n")
 	}
 
 	// Apply shell-specific overlay first (if it exists)

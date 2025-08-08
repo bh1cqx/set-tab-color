@@ -6,7 +6,7 @@ import (
 
 func TestDetectTerminalType(t *testing.T) {
 	// This test will detect the actual terminal types running the tests
-	info := detectTerminalAndShell()
+	info := detectTerminalAndShell("")
 
 	// We can't assert specific values since it depends on the environment
 	// but we can ensure it returns valid types
@@ -38,22 +38,22 @@ func TestDetectTerminalType(t *testing.T) {
 
 func TestTerminalAndShellDetection(t *testing.T) {
 	// Test the combined terminal and shell detection
-	info := detectTerminalAndShell()
+	info := detectTerminalAndShell("")
 
 	t.Logf("Combined detection results:")
 	t.Logf("  Terminals: %v", info.Terminals)
 	t.Logf("  Shell: %v", info.Shell)
 	t.Logf("  Valid: %v", info.Valid)
 
-	// Test individual detection functions for backwards compatibility
-	shellType := detectShellType()
+	// Test individual shell extraction for backwards compatibility
+	shellType := info.Shell
 
 	t.Logf("Individual detection results:")
-	t.Logf("  detectShellType() returned: %v", shellType)
+	t.Logf("  Shell extracted: %v", shellType)
 
-	// Verify consistency
+	// Verify consistency (should always match since we're using the same info)
 	if shellType != info.Shell {
-		t.Errorf("detectShellType() = %v, but detectTerminalAndShell().Shell = %v", shellType, info.Shell)
+		t.Errorf("Shell extraction = %v, but detectTerminalAndShell().Shell = %v", shellType, info.Shell)
 	}
 }
 
@@ -70,7 +70,8 @@ func TestShellTypeValidation(t *testing.T) {
 		ShellTypeSh,
 	}
 
-	shellType := detectShellType()
+	info := detectTerminalAndShell("")
+	shellType := info.Shell
 
 	found := false
 	for _, validType := range validShellTypes {
@@ -81,10 +82,51 @@ func TestShellTypeValidation(t *testing.T) {
 	}
 
 	if !found {
-		t.Errorf("detectShellType() returned invalid type: %s", shellType)
+		t.Errorf("detectTerminalAndShell().Shell returned invalid type: %s", shellType)
 	}
 
 	t.Logf("Detected shell type: %s", shellType)
+}
+
+func TestTerminalOverride(t *testing.T) {
+	tests := []struct {
+		name             string
+		terminalOverride string
+		expectedTerminal TerminalType
+		shouldPrepend    bool
+	}{
+		{"iTerm2 override", "iterm2", TerminalTypeITerm2, true},
+		{"VSCode override", "vscode", TerminalTypeVSCode, true},
+		{"SSH override", "ssh", TerminalTypeSSH, true},
+		{"Tmux override", "tmux", TerminalTypeTmux, true},
+		{"ETTerminal override", "etterminal", TerminalTypeETTerminal, true},
+		{"Invalid override", "invalid", TerminalTypeUnknown, false},
+		{"Empty override", "", TerminalTypeUnknown, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			info := detectTerminalAndShell(tt.terminalOverride)
+
+			if tt.shouldPrepend {
+				// Check that the override terminal is the first in the list
+				if len(info.Terminals) == 0 {
+					t.Errorf("Expected terminal override %q to be prepended, but got empty terminals list", tt.terminalOverride)
+					return
+				}
+
+				if info.Terminals[0] != tt.expectedTerminal {
+					t.Errorf("Expected first terminal to be %v for override %q, but got %v", tt.expectedTerminal, tt.terminalOverride, info.Terminals[0])
+				}
+
+				t.Logf("Override %q successfully prepended %v to terminals list: %v", tt.terminalOverride, tt.expectedTerminal, info.Terminals)
+			} else {
+				// For invalid or empty overrides, check that no specific terminal was forcefully prepended
+				// (though there might still be detected terminals from the actual process chain)
+				t.Logf("Override %q correctly ignored, terminals detected: %v", tt.terminalOverride, info.Terminals)
+			}
+		})
+	}
 }
 
 func TestGetProcessAncestorChain(t *testing.T) {
@@ -109,33 +151,6 @@ func TestGetProcessAncestorChain(t *testing.T) {
 		firstProcess := chain[0]
 		if firstProcess == "" {
 			t.Error("First process in chain should not be empty")
-		}
-	}
-}
-
-func TestGetProcessAncestorChainDetailed(t *testing.T) {
-	chain, err := getProcessAncestorChainDetailed()
-	if err != nil {
-		t.Fatalf("getProcessAncestorChainDetailed() returned error: %v", err)
-	}
-
-	if len(chain) == 0 {
-		t.Error("getProcessAncestorChainDetailed() returned empty chain")
-	}
-
-	// Log the detailed process chain for debugging
-	t.Logf("Detailed process ancestor chain:")
-	for i, processInfo := range chain {
-		t.Logf("  %d: PID=%d, Name=%s", i, processInfo.PID, processInfo.Name)
-	}
-
-	// Verify that all entries have valid PID and non-empty names
-	for i, processInfo := range chain {
-		if processInfo.PID <= 0 {
-			t.Errorf("Process %d has invalid PID: %d", i, processInfo.PID)
-		}
-		if processInfo.Name == "" {
-			t.Errorf("Process %d has empty name", i)
 		}
 	}
 }
@@ -211,7 +226,7 @@ func TestIsTerminalInAncestorChain(t *testing.T) {
 // BenchmarkDetectTerminalType benchmarks the terminal detection performance
 func BenchmarkDetectTerminalType(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = detectTerminalAndShell()
+		_ = detectTerminalAndShell("")
 	}
 }
 

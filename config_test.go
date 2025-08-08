@@ -6,6 +6,14 @@ import (
 	"testing"
 )
 
+// getProfileWithTerminalOverride is a test helper function that can either auto-detect
+// terminal info (when terminalOverride is empty) or use the specified terminal override
+func getProfileWithTerminalOverride(profileName string, terminalOverride string) (*Profile, error) {
+	// Detect terminal and shell info with optional terminal override
+	terminalInfo := detectTerminalAndShell(terminalOverride)
+	return getProfileWithTerminalInfo(profileName, &terminalInfo)
+}
+
 // TestGetConfigPath tests the configuration path resolution
 func TestGetConfigPath(t *testing.T) {
 	// Save original env var
@@ -273,16 +281,16 @@ fg = "white"
 		t.Errorf("Expected error to mention profile not found, got: %v", err)
 	}
 
-	// Test that the public getProfile function still works (backward compatibility)
-	profile, err = getProfile("test-profile")
+	// Test that the helper function works with auto-detection (backward compatibility)
+	profile, err = getProfileWithTerminalOverride("test-profile", "")
 	if err != nil {
-		t.Fatalf("getProfile() failed: %v", err)
+		t.Fatalf("getProfileWithTerminalOverride() failed: %v", err)
 	}
 
 	// The result might vary based on current terminal, but it should at least contain the base values
 	// We'll just verify that it returns a profile and doesn't fail
 	if profile == nil {
-		t.Error("Expected getProfile() to return a profile")
+		t.Error("Expected getProfileWithTerminalOverride() to return a profile")
 	}
 }
 
